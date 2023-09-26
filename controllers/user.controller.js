@@ -1,51 +1,45 @@
-import { Schema, model } from "mongoose";
+import User from "../models/user.model";
+import AppError from "../utils/error.util";
 
-
-const userSchema = new Schema({
-    fullName: {
-        type: 'String',
-        required: [true, 'Name is Required'],
-        minLength: [5, "name must be at least 5 char"],
-        maxLength: [5, "Name should be less than   50 char"],
-        lowercase: true,
-        trim: true,
-    },
-    email: {
-        type: 'String',
-        required: [true, 'Email is Required'],
-        lowercase: true,
-        trim: true,
-        unique: true,
-        match: []
-
-    },
-    password: {
-        type: 'String',
-        required: [true, 'Password Required'],
-        minLength: [8, 'Password must be at least 8 char'],
-        select: false
-    },
-    avatar: {
-        public_id: {
-            type: 'String'
-        },
-        secure_url: {
-            type: 'String'
+const register = async(req, res, next)=>{
+    const {fullName, email , password} = req.body;
+    if(!fullName || !email || !password){
+        return  next(new AppError('All Fields are Required ', 400));
+    }
+    //checking in database
+    const userExists = await User.findOne({email})
+    if(userExists){
+        return next(newAppError('Email already Exists', 400));
+    }
+    //creating User 
+    const user = await User.create({
+        fullName, 
+        email , 
+        password, 
+        avatar : {
+            public_id: email,
+            // secure_url:
         }
-    },
-    role: {
-        type: 'String',
-        enum: ['USER', 'ADMIN'],
-        default: 'USER'
-    },
+    });
+    if(!user){
+        return next(new AppError('User registration Failed , Please Try again',400))
 
-    forgotPasswordToken: String,
-    forgotPasswordExpiry: Date
-}, {
-    timestamps: true
+    }
+    //Todo : File upload
+    await User.save();
+
+    user.password = undefined;
+    res.status(201).json({
+        success: true, 
+        message : 'User registered successfully',
+        user,
+    })
 
 
-})
-const User = model('User', userSchema);
 
-export default User;
+};
+const login = (req, res)=>{};
+const logout = (req, res)=>{};
+const getProfile = (req, res)=>{};
+
+export {}

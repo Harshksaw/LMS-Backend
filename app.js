@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { config } from 'dotenv';
 import morgan from 'morgan';
+import errorMiddleware from './middlewares/error.middleware';
 
 config();
 
@@ -26,6 +27,9 @@ app.use(morgan('dev')) //logger middleware
 app.all('*', (req, res) => {
     res.status(404).send('OOPS !! 404 PAGE NOT FOUND');
 })
+
+//generic Erro handling
+app.use(errorMiddleware);
 
 
 
