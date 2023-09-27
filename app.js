@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { config } from 'dotenv';
 import morgan from 'morgan';
-import errorMiddleware from './middlewares/error.middleware';
+import errorMiddleware from './middlewares/error.middleware.js';
 
 config();
 
