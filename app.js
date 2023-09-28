@@ -28,7 +28,7 @@ app.all('*', (req, res) => {
     res.status(404).send('OOPS !! 404 PAGE NOT FOUND');
 })
 
-//generic Erro handling
+//generic Error handling
 app.use(errorMiddleware);
 
 
