@@ -1,71 +1,72 @@
 import { Schema, model } from "mongoose";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-const userSchema = new Schema({
-    fullName: {
-        type: 'String',
-        required: [true, 'Name is Required'],
-        minLength: [5, "name must be at least 5 char"],
-        maxLength: [5, "Name should be less than   50 char"],
-        lowercase: true,
-        trim: true,
-    },
-    email: {
-        type: 'String',
-        required: [true, 'Email is Required'],
-        lowercase: true,
-        trim: true,
-        unique: true,
-        match: []
-
-    },
-    password: {
-        type: 'String',
-        required: [true, 'Password Required'],
-        minLength: [8, 'Password must be at least 8 char'],
-        select: false
-    },
-    avatar: {
-        public_id: {
-            type: 'String'
+const userSchema = new Schema(
+    {
+        fullName: {
+            type: String,
+            required: [true, 'Name is required'],
+            minlength: [5, 'Name must be at least 5 characters'],
+            lowercase: true,
+            trim: true, // Removes unnecessary spaces
         },
-        secure_url: {
-            type: 'String'
-        }
-    },
-    role: {
-        type: 'String',
-        enum: ['USER', 'ADMIN'],
-        default: 'USER'
-    },
+        email: {
+            type: String,
+            required: [true, 'Email is required'],
+            unique: true,
+            lowercase: true,
+            match: [
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+                'Please fill in a valid email address',
+            ], // Matches email against regex
+        },
+        password: {
+            type: String,
+            required: [true, 'Password is required'],
+            minlength: [8, 'Password must be at least 8 characters'],
+            select: false, // Will not select password upon looking up a document
+        },
+        avatar: {
+            public_id: {
+                type: 'String'
+            },
+            secure_url: {
+                type: 'String'
+            }
+        },
+        role: {
+            type: 'String',
+            enum: ['USER', 'ADMIN'],
+            default: 'USER'
+        },
 
-    forgotPasswordToken: String,
-    forgotPasswordExpiry: Date
-}, {
+        forgotPasswordToken: String,
+        forgotPasswordExpiry: Date
+    }, {
     timestamps: true
 
 
 
 })
-userSchema.pre('save', async function(next){
-    if(!this.isModified('password')){
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
         return next();
     }
-    this.password =await  bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, 10);
 })
 userSchema.methods = {
-    generateJWTTOken :async function(){
+    generateJWTToken: async function () {
         return await jwt.sign(
             {
-            id: this._id , email : this.email,
-        },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: process.env.JWT_EXPIRY,
-        }
+                id: this._id, email: this.email,subscription:this.subscription, role : this.role
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: process.env.JWT_EXPIRY,
+            }
         )
     },
-    comparePassword :async function(plainTextPassword){
+    comparePassword: async function (plainTextPassword) {
         return await bcrypt.compare(plainTextPassword, this.password);
 
     }
@@ -73,7 +74,7 @@ userSchema.methods = {
 }
 
 
-userSchema.pre('save', userSchema);
+// userSchema.pre('save', userSchema);
 const User = model('User', userSchema);
 
 export default User;

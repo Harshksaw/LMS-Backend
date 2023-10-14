@@ -1,74 +1,63 @@
 import User from "../models/user.model.js";
 import AppError from "../utils/error.util.js";
-import cloudinary from "cloudinary";
+// import cloudinary from "cloudinary";
 
 const cookieOptions = {
-    maxAge: 7 * 24 * 60 * 6 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     httpOnly: true,
-    secure: true
-}
+    secure: true,
+};
 
 const register = async (req, res, next) => {
     const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) {
         return next(new AppError('All Fields are Required ', 400));
     }
-    //checking in database
-    const userExists = await User.findOne({ email })
+
+    // Check if the email already exists
+    const userExists = await User.findOne({ email });
     if (userExists) {
-        return next(newAppError('Email already Exists', 400));
+        return next(new AppError('Email already exists', 400));
     }
-    //creating User 
+
+    // Create the user
     const user = await User.create({
         fullName,
         email,
         password,
         avatar: {
             public_id: email,
-            // secure_url:
-        }
+            secure_url:
+                'https://res.cloudinary.com/du9jzqlpt/image/upload/v1674647316/avatar_drzgxv.jpg',
+        },
     });
+
     if (!user) {
-        return next(new AppError('User registration Failed , Please Try again', 400))
-
-    }
-    //Todo : File upload
-    if(req.file){
-        try{
-            const result = await cloudinary.v2.uploader.upload(req.file.path , {
-                folder: 'lms',
-                width: 250,
-                height: 250,
-                gravity: 'faces',
-                crop: 'fill'
-            })
-            if(result){
-                user.avatar.public_id = result.public_id;
-                user.avatar.secure_url = result.secure_url;
-
-                //Remove file from Server
-                fs.rm(`uploads/${req.file.filename}`)
-            }
-        }catch(e){
-            return next(new AppError(error || 'FIle not uploaded , please try again', 500))
-        }
+        return next(new AppError('User registration failed, please try again later', 400));
     }
 
-    await User.save();
+    // Save the user object
+    await user.save();
 
-    user.password = undefined;
+    // Generating a JWT token
     const token = await user.generateJWTToken();
+
+    // Setting the password to undefined so it does not get sent in the response
+    user.password = undefined;
+
+    // Setting the token in the cookie with name token along with cookieOptions
+    res.cookie('token', token, cookieOptions);
 
     res.status(201).json({
         success: true,
         message: 'User registered successfully',
         user,
-    })
-    res.cookie('token', token, cookieOptions)
-
-
+    });
 };
-const login = async (req, res) => {
+
+
+
+const login = async (req, res, next) => {
     try {
 
 
@@ -101,30 +90,31 @@ const login = async (req, res) => {
 };
 const logout = (req, res) => {
     res.cookie('token', null, {
-        secure : true,
-        maxAge : 0,
+        secure: true,
+        maxAge: 0,
         httpOnly: true
     })
     res.status(200).json({
-        success:true,
+        success: true,
         message: 'User logged out successfully'
     })
-    const getProfile  = async(res, res)=>{
-        try{
 
-            const userId = req.user.id;
-            const user = await User.findById(userId);
-            res.status(200).json({
-                success:true,
-                message: 'User Details',
-                user
-            })
-        }catch(e){
-            return next(new AppError('Failed too fetch profile'))
-        }
+};
+const getProfile = async (req, res) => {
+    try {
 
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+        res.status(200).json({
+            success: true,
+            message: 'User Details',
+            user
+        })
+    } catch (e) {
+        return next(new AppError('Failed too fetch profile'))
     }
- };
-const getProfile = (req, res) => { };
 
-export { }
+}
+
+
+export { register, login, logout, getProfile };
