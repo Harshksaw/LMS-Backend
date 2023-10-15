@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import AppError from "../utils/error.util.js";
-// import cloudinary from "cloudinary";
+import cloudinary from "cloudinary";
 
 const cookieOptions = {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
@@ -21,6 +21,7 @@ const register = async (req, res, next) => {
     }
 
     // Create the user
+    // Create new user with the given necessary data and save to DB
     const user = await User.create({
         fullName,
         email,
@@ -32,8 +33,38 @@ const register = async (req, res, next) => {
         },
     });
 
+    // If user not created send message response
     if (!user) {
-        return next(new AppError('User registration failed, please try again later', 400));
+        return next(
+            new AppError('User registration failed, please try again later', 400)
+        );
+    }
+
+    // Run only if user sends a file
+    if (req.file) {
+        try {
+            const result = await cloudinary.v2.uploader.upload(req.file.path, {
+                folder: 'lms', // Save files in a folder named lms
+                width: 250,
+                height: 250,
+                gravity: 'faces', // This option tells cloudinary to center the image around detected faces (if any) after cropping or resizing the original image
+                crop: 'fill',
+            });
+
+            // If success
+            if (result) {
+                // Set the public_id and secure_url in DB
+                user.avatar.public_id = result.public_id;
+                user.avatar.secure_url = result.secure_url;
+
+                // After successful upload remove the file from local storage
+                fs.rm(`uploads/${req.file.filename}`);
+            }
+        } catch (error) {
+            return next(
+                new AppError(error || 'File not uploaded, please try again', 400)
+            );
+        }
     }
 
     // Save the user object
