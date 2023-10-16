@@ -152,5 +152,41 @@ const getProfile = async (req, res) => {
 
 }
 
+const forgotPassword =async (req, res, next)=>{
+    const {email} = req.body;
+    if(!email){
+        return next(new AppError("Email is required", 400))
+    }
+    const user = await User.findOne({email});
+    if(!user){
+        return next(new AppError("Email is required", 400))
+    }
+    const resetTOke = await user.generatePasswordResetToken();
+    await user.save();
 
-export { register, login, logout, getProfile };
+    const  resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+    //send this url and email
+    const subject = 'Reset Password'
+    const message = `You can reset your password by clicking <a href=${resetPasswordUrl} target="_blank">Reset your password</a>\nIf the above link does not work for some reason then copy paste this link in new tab ${resetPasswordUrl}.\n If you have not requested this, kindly ignore.`;
+    try{
+        await sendEmail(email , subject , message);
+        res.status(200).json({
+            success:"True",
+            message:`Rest token password has been sent to ${email} Successfully`
+        })
+    }catch(e){
+        //security puprpose
+        user.forgotPasswordExpiry = undefined;
+        user.forgotPasswordToken= undefined;
+
+        return next(new AppError(e.message, 500));
+    }
+
+
+
+}
+
+
+const resetPassword =()=>{}
+
+export { register, login, logout, getProfile , resetPassword, forgotPassword};
