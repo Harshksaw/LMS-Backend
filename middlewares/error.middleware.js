@@ -1,10 +1,12 @@
-const errorMiddleware = (err, req, res, next) => {
+const errorMiddleware = (err, _req, res, _next) => {
     err.statusCode = err.statusCode || 500;
-    err.message = err.message || "Something went wrong !";
-    req.status(err.statusCode).json({
-        success:false,
+    err.message = err.message || "Something went wrong";
+
+    res.status(err.statusCode).json({
+        success: false,
         message: err.message,
-        stack: err.stack
-    })
-}
+        stack: err.stack,
+    });
+};
+
 export default errorMiddleware;

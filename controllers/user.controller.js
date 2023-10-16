@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import AppError from "../utils/error.util.js";
 import cloudinary from "cloudinary";
+import fs from 'fs/promises';
 
 const cookieOptions = {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
@@ -42,6 +43,8 @@ const register = async (req, res, next) => {
 
     // Run only if user sends a file
     if (req.file) {
+        console.log("FILE DETAILS" , JSON.stringify.file)
+
         try {
             const result = await cloudinary.v2.uploader.upload(req.file.path, {
                 folder: 'lms', // Save files in a folder named lms
@@ -62,7 +65,7 @@ const register = async (req, res, next) => {
             }
         } catch (error) {
             return next(
-                new AppError(error || 'File not uploaded, please try again', 400)
+                new AppError(error || 'File not uploaded, please try again', 408)
             );
         }
     }
