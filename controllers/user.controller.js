@@ -3,7 +3,7 @@ import User from '../models/user.model.js';
 
 import cloudinary from "cloudinary";
 import fs from 'fs/promises';
-
+import sendEmail from '../utils/sendEmail.js'
 
 const cookieOptions = {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
@@ -161,10 +161,10 @@ const forgotPassword =async (req, res, next)=>{
     if(!user){
         return next(new AppError("Email is required", 400))
     }
-    const resetTOke = await user.generatePasswordResetToken();
+    const resetToken = await user.generatePasswordResetToken();
     await user.save();
 
-    const  resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+    const  resetPasswordUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
     //send this url and email
     const subject = 'Reset Password'
     const message = `You can reset your password by clicking <a href=${resetPasswordUrl} target="_blank">Reset your password</a>\nIf the above link does not work for some reason then copy paste this link in new tab ${resetPasswordUrl}.\n If you have not requested this, kindly ignore.`;
@@ -174,12 +174,13 @@ const forgotPassword =async (req, res, next)=>{
             success:"True",
             message:`Rest token password has been sent to ${email} Successfully`
         })
+        console.log("sendemail");
     }catch(e){
-        //security puprpose
+        //security puppose
         user.forgotPasswordExpiry = undefined;
         user.forgotPasswordToken= undefined;
-
-        return next(new AppError(e.message, 500));
+        console.log("notsentemail")
+        return next(new AppError(e.message, 50));
     }
 
 
@@ -187,6 +188,36 @@ const forgotPassword =async (req, res, next)=>{
 }
 
 
-const resetPassword =()=>{}
+const resetPassword =async(req, res )=>{
+    const {resetToken }= req.params;
+    const {password} = req.body;
+
+    const forgotPasswordToken = crypto 
+        .create('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+    //checkin if the token exists
+    const user = await User.findOne({
+
+        //checking expiry
+        forgotPasswordToken: {$gt: Date.now()}
+
+    });
+    if(!user){
+        return next(
+            new AppError('Token is Invalid or expired , please try agin ,',400)
+        )
+    }
+    //if found then update the password
+    user.password = password;
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordExpiry = undefined;
+    user.save();
+    res.status(200).json({
+        success: true,
+        message:'Password changed successfully';
+    })
+}
 
 export { register, login, logout, getProfile , resetPassword, forgotPassword};
