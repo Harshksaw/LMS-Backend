@@ -4,7 +4,7 @@ import User from '../models/user.model.js';
 import cloudinary from "cloudinary";
 import fs from 'fs/promises';
 import sendEmail from '../utils/sendEmail.js'
-
+import crypto from 'crypto';
 const cookieOptions = {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     httpOnly: true,
@@ -45,7 +45,7 @@ const register = async (req, res, next) => {
 
     // Run only if user sends a file
     if (req.file) {
-        console.log("FILE DETAILS" , JSON.stringify(req.file))
+        console.log("FILE DETAILS", JSON.stringify(req.file))
 
         try {
             const result = await cloudinary.v2.uploader.upload(req.file.path, {
@@ -152,33 +152,33 @@ const getProfile = async (req, res) => {
 
 }
 
-const forgotPassword =async (req, res, next)=>{
-    const {email} = req.body;
-    if(!email){
+const forgotPassword = async (req, res, next) => {
+    const { email } = req.body;
+    if (!email) {
         return next(new AppError("Email is required", 400))
     }
-    const user = await User.findOne({email});
-    if(!user){
+    const user = await User.findOne({ email });
+    if (!user) {
         return next(new AppError("Email is required", 400))
     }
     const resetToken = await user.generatePasswordResetToken();
     await user.save();
 
-    const  resetPasswordUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+    const resetPasswordUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
     //send this url and email
     const subject = 'Reset Password'
     const message = `You can reset your password by clicking <a href=${resetPasswordUrl} target="_blank">Reset your password</a>\nIf the above link does not work for some reason then copy paste this link in new tab ${resetPasswordUrl}.\n If you have not requested this, kindly ignore.`;
-    try{
-        await sendEmail(email , subject , message);
+    try {
+        await sendEmail(email, subject, message);
         res.status(200).json({
-            success:"True",
-            message:`Rest token password has been sent to ${email} Successfully`
+            success: "True",
+            message: `Rest token password has been sent to ${email} Successfully`
         })
         console.log("sendemail");
-    }catch(e){
+    } catch (e) {
         //security puppose
         user.forgotPasswordExpiry = undefined;
-        user.forgotPasswordToken= undefined;
+        user.forgotPasswordToken = undefined;
         console.log("notsentemail")
         return next(new AppError(e.message, 50));
     }
@@ -188,12 +188,12 @@ const forgotPassword =async (req, res, next)=>{
 }
 
 
-const resetPassword =async(req, res )=>{
-    const {resetToken }= req.params;
-    const {password} = req.body;
+const resetPassword = async (req, res) => {
+    const { resetToken } = req.params;
+    const { password } = req.body;
 
-    const forgotPasswordToken = crypto 
-        .create('sha256')
+    const forgotPasswordToken = crypto
+        .createHash('sha256')
         .update(resetToken)
         .digest('hex');
 
@@ -201,12 +201,12 @@ const resetPassword =async(req, res )=>{
     const user = await User.findOne({
 
         //checking expiry
-        forgotPasswordToken: {$gt: Date.now()}
+        forgotPasswordToken: { $gt: Date.now() }
 
     });
-    if(!user){
+    if (!user) {
         return next(
-            new AppError('Token is Invalid or expired , please try agin ,',400)
+            new AppError('Token is Invalid or expired , please try agin ,', 400)
         )
     }
     //if found then update the password
@@ -216,8 +216,93 @@ const resetPassword =async(req, res )=>{
     user.save();
     res.status(200).json({
         success: true,
-        message:'Password changed successfully';
+        message: 'Password changed successfully',
     })
+
 }
 
-export { register, login, logout, getProfile , resetPassword, forgotPassword};
+const changePassword = async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const { id } = req.user;
+    if (!oldPassword || !newPassword) {
+        return next(
+            new AppError('All fields are mandatory', 400)
+        )
+    }
+
+    const user = await User.findById(id).select('+password');
+
+    if (!user) {
+        return next(
+            new AppError('User does not exists', 400)
+        )
+    }
+    const isPasswordvalid = await user.comparePassword(oldPassword);
+    if (!isPasswordvalid) {
+        return next(
+            new AppError('Invalid old password', 400)
+        )
+    }
+    user.password = password
+    await user.save()
+    user.password = undefined;
+    res.status(200).json({
+        success: true,
+        message: "password changes successfully! ",
+    })
+
+}
+
+const updateUser = async (req, res) => {
+
+    const { fullName } = req.body;
+    const { id } = req.user.id; // also verfying th euser as the id is in url 
+    const user = await User.findById(id);
+
+    if (!user) {
+        return next(
+            new AppError('User does not exits ', 400)
+        )
+    }
+    if (req.fullName) {
+        //update fullName
+        user.fullName = fullName
+    }
+    if (req.file) {
+        await cloudinary.v2.uploader.destroy(user.avatar.public_id); //destroying  the  previous image
+        try {
+            const result = await cloudinary.v2.uploader.upload(req.file.path, {
+                folder: 'lms', // Save files in a folder named lms
+                width: 250,
+                height: 250,
+                gravity: 'faces', // This option tells cloudinary to center the image around detected faces (if any) after cropping or resizing the original image
+                crop: 'fill',
+            });
+
+            // If success
+            if (result) {
+                // Set the public_id and secure_url in DB
+                user.avatar.public_id = result.public_id;
+                user.avatar.secure_url = result.secure_url;
+
+                // After successful upload remove the file from local storage
+                fs.rm(`uploads/${req.file.filename}`);
+            }
+        } catch (error) {
+            return next(
+                new AppError(error || 'File not uploaded, please try again', 400)
+            );
+
+        }
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: 'User Details  updated Successfully'
+        })
+
+
+
+    }
+}
+
+export { register, login, logout, getProfile, resetPassword, forgotPassword, changePassword, updateUser }
