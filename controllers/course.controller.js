@@ -25,7 +25,8 @@ const getAllCourses = async function (req, res, next) {
     }
 }
 
-const getLecturesByCourceId = async function (req, res, next) {
+const  getLecturesBycourseId = async function (req, res, next) {
+
     try {
         const { id } = req.params;
         const course = await Course.findById(id);
@@ -48,10 +49,10 @@ const getLecturesByCourceId = async function (req, res, next) {
     }
 }
 
-const createCourse = async(req, res, next) => {
+const createCourse = async (req, res, next) => {
 
     const { title, description, category, createdBy } = req.body;
-    console.log( title, description, category, createdBy)
+    console.log(title, description, category, createdBy)
     if (!title || !description || !category || !createdBy) {
         return next(
             new AppError('ALl fields are required->', 400)
@@ -104,32 +105,32 @@ const createCourse = async(req, res, next) => {
     }
 
 }
-const updateCourse = async(req, res, next) => {
-    try{
-        const {id} = req.params;
+const updateCourse = async (req, res, next) => {
+    try {
+        const { id } = req.params;
 
         const course = await Course.findByIdAndUpdate(
-            id,{
-                $set: req.body
-            },
+            id, {
+            $set: req.body
+        },
             {
                 runValidators
             }
         );
-        if(!course ){
+        if (!course) {
             new AppError("COurse with give id does not exits", 500)
         }
 
 
         res.status(200).json({
-            success:true,
-            message:'COurse updated Successdully',
+            success: true,
+            message: 'COurse updated Successdully',
             course
         })
 
 
 
-    }catch(e){
+    } catch (e) {
         return next(
             new AppError(e.message, 500)
         )
@@ -137,35 +138,98 @@ const updateCourse = async(req, res, next) => {
 
 }
 
-const removeCourse = async(req, res, next) => {
-    try{
-        const {id} = req.params;
+const removeCourse = async (req, res, next) => {
+    try {
+        const { id } = req.params;
         const course = await Course.findById(id);
 
 
-        if(!course){
+        if (!course) {
             return next(
                 new AppError('Course with given id does not exits', 500)
             )
         }
         await Course.findByIdAndDelete(id)
         res.status(200).json({
-            success:true,
-            message:'COurse delete successfully'
+            success: true,
+            message: 'COurse delete successfully'
         })
 
 
-    }catch(e){
+    } catch (e) {
         return next(
             new AppError(e.message, 500)
         )
     }
 
 }
+
+const addLectureToCourseById = async (req, res, next) => {
+
+    try {
+        const { title, description } = req.body;
+        const { id } = req.params;
+
+        if (!title || !description) {
+            return next(
+                new AppError('All Field are required || Adding Lectures', 400)
+            )
+        }
+
+        const course = await Course.findById(id);
+        if (!course) {
+            return next(
+                new AppError('Course with given id does not exits', 500)
+            )
+        }
+
+        const lectureData = {
+            title,
+            description,
+            lecture:{}
+        };
+        if (req.file) {
+            const result = await cloudinary.v2.uploader.upload(req.file.path,
+                {
+                    folder: 'Lms'
+                })
+            if (result) {
+                lectureData.lecture.public_id = result.public_id;
+                lectureData.lecture.secure_url = result.secure_url;
+
+            }
+            //delete file from local machine
+            fs.rm(`uploads/${req.file.filename}`)
+
+
+        }
+        course.lectures.push(lectureData);
+        course.numberOfLectures = course.lectures.length;
+
+        await course.save()
+        res.status(200).json({
+            success: true,
+            message: 'Lecture successfully added to the course',
+            course
+        })
+
+
+    } catch (e) {
+        return next(
+            new AppError(e.message , 500)
+        )
+
+    }
+
+}
+
+
 export {
     getAllCourses,
-    getLecturesByCourceId,
+    getLecturesBycourseId,
     createCourse,
     updateCourse,
-    removeCourse
+    removeCourse,
+    addLectureToCourseById
+
 }

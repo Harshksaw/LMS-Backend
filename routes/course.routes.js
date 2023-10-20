@@ -4,6 +4,9 @@ import {
     removeCourse,
     getAllCourses,
     updateCourse,
+    getLecturesBycourseId,
+    addLectureToCourseById,
+
 } from "../controllers/course.controller.js";
 import {
     authorizedRoles,
@@ -22,7 +25,13 @@ router
 router
     .route("/:id")
     .put(isLoggedIn,authorizedRoles('ADMIN') , updateCourse)
-    .delete(isLoggedIn,authorizedRoles('ADMIN') ,removeCourse);
-// .get(isLoggedIn, getLecturesByCourceId)
+    .delete(isLoggedIn,authorizedRoles('ADMIN') ,removeCourse)
+    .post(
+        isLoggedIn,
+        authorizedRoles('ADMIN'), 
+        upload.single('lecture'), 
+        addLectureToCourseById
+        )
+
 
 export default router;

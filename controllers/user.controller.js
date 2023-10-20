@@ -136,7 +136,7 @@ const logout = (req, res) => {
     })
 
 };
-const getProfile = async (req, res) => {
+const getProfile = async (req, res, next) => {
     try {
 
         const userId = req.user.id;
@@ -188,7 +188,7 @@ const forgotPassword = async (req, res, next) => {
 }
 
 
-const resetPassword = async (req, res) => {
+const resetPassword = async (req, res , next) => {
     const { resetToken } = req.params;
     const { password } = req.body;
 
@@ -221,7 +221,7 @@ const resetPassword = async (req, res) => {
 
 }
 
-const changePassword = async (req, res) => {
+const changePassword = async (req, res, next) => {
     const { oldPassword, newPassword } = req.body;
     const { id } = req.user;
     if (!oldPassword || !newPassword) {
@@ -253,7 +253,7 @@ const changePassword = async (req, res) => {
 
 }
 
-const updateUser = async (req, res) => {
+const updateUser = async (req, res , next) => {
 
     const { fullName } = req.body;
     const { id } = req.user.id; // also verfying th euser as the id is in url 
