@@ -104,11 +104,62 @@ const createCourse = async(req, res, next) => {
     }
 
 }
-const updateCourse = (req, res, next) => {
+const updateCourse = async(req, res, next) => {
+    try{
+        const {id} = req.params;
+
+        const course = await Course.findByIdAndUpdate(
+            id,{
+                $set: req.body
+            },
+            {
+                runValidators
+            }
+        );
+        if(!course ){
+            new AppError("COurse with give id does not exits", 500)
+        }
+
+
+        res.status(200).json({
+            success:true,
+            message:'COurse updated Successdully',
+            course
+        })
+
+
+
+    }catch(e){
+        return next(
+            new AppError(e.message, 500)
+        )
+    }
 
 }
 
-const deleteCourse = (req, res, next) => {
+const removeCourse = async(req, res, next) => {
+    try{
+        const {id} = req.params;
+        const course = await Course.findById(id);
+
+
+        if(!course){
+            return next(
+                new AppError('Course with given id does not exits', 500)
+            )
+        }
+        await Course.findByIdAndDelete(id)
+        res.status(200).json({
+            success:true,
+            message:'COurse delete successfully'
+        })
+
+
+    }catch(e){
+        return next(
+            new AppError(e.message, 500)
+        )
+    }
 
 }
 export {
@@ -116,5 +167,5 @@ export {
     getLecturesByCourceId,
     createCourse,
     updateCourse,
-    deleteCourse
+    removeCourse
 }
