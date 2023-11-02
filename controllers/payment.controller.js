@@ -78,5 +78,9 @@ export  const verifySubscription = async(req, res ,next)=>{
     })
 
 }
-export  const cancelSubscription = async(req, res ,next)=>{}
+export  const cancelSubscription = async(req, res ,next)=>{
+
+    const {id} = req.user
+    
+}
 export  const allPayments = async(req, res ,next)=>{}
