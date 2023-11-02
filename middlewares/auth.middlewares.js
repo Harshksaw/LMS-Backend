@@ -23,8 +23,18 @@ const authorizedRoles = (...roles) => async(req, res, next)=>
     }
 
 }
+const authorizedSubscriber = async(req , res, next)=>{
+    const subscription = req.user.subscription;
+    if(currentUserRoles !== 'ADMIN' && subscription.status !== 'active'){
+        return next(new AppError('NOt authorized , first Pay', 403))
+
+    }
+
+}
+
 
 export {
     isLoggedIn,
-    authorizedRoles
+    authorizedRoles,
+    authorizedSubscriber
 }
