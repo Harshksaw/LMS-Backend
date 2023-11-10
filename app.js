@@ -31,9 +31,9 @@ app.use(morgan("dev")); //logger middleware
 app.use("/ping", function (req, res) {
   res.send("/pong");
 });
-app.use("/api/v1/user", userRoutes); 
-app.use("/api/v1/courses", courseRoutes); //courses
-app.use("/api/v1/payments", paymentRoutes); 
+app.use("/api/v1/user", userRoutes)
+app.use("/api/v1/course", courseRoutes)
+app.use("/api/v1/payments", paymentRoutes)
 
 app.all("*", (req, res) => {
   res.status(404).send("OOPS !! 404 PAGE NOT FOUND");
