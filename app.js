@@ -7,10 +7,11 @@ import errorMiddleware from "./middlewares/error.middleware.js";
 import userRoutes from "./routes/user.routes.js";
 import courseRoutes from './routes/course.routes.js'
 import paymentRoutes from './routes/payment.routes.js'
+import miscRoutes from './routes/miscellaneous.routes.js';
 config();
-const app = express();
+const app = express()
 
-app.use(express.json());
+app.use(express.json())
 
 app.use(express.urlencoded({ extended: true }));
 // used to parse data sent in the URL-encoded format. URL-encoded data is commonly 
@@ -24,16 +25,17 @@ app.use(
   })
 );
 
-app.use(cookieParser());
 app.use(morgan("dev")); //logger middleware
+app.use(cookieParser());
 //Routes of modules
 
 app.use("/ping", function (req, res) {
   res.send("/pong");
 });
 app.use("/api/v1/user", userRoutes)
-app.use("/api/v1/course", courseRoutes)
+app.use("/api/v1/courses", courseRoutes)
 app.use("/api/v1/payments", paymentRoutes)
+app.use('/api/v1', miscRoutes);
 
 app.all("*", (req, res) => {
   res.status(404).send("OOPS !! 404 PAGE NOT FOUND");

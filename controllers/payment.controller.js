@@ -1,6 +1,7 @@
 
 import { razorpay } from "../server.js";
-import AppError from "../utils/error.util.js";
+import AppError from '../utils/appError.js';
+
 
 
 export const getRazorpayApiKey = async (req, res, next) => {

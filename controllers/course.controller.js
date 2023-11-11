@@ -1,4 +1,4 @@
-import AppError from "../utils/error.util.js";
+
 import Course from '../models/course.model.js';
 
 
@@ -6,6 +6,7 @@ import cloudinary from 'cloudinary';
 
 
 import fs from 'fs/promises';
+import AppError from '../utils/appError.js';
 
 const getAllCourses = async function (req, res, next) {
     try {

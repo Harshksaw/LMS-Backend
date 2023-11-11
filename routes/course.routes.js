@@ -9,10 +9,10 @@ import {
 
 } from "../controllers/course.controller.js";
 import {
-    authorizedRoles,
-    authorizedSubscriber,
+    authorizeRoles,
+    authorizeSubscribers,
     isLoggedIn,
-} from "../middlewares/auth.middlewares.js";
+} from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
 
 const router = new Router();
@@ -21,19 +21,22 @@ router
     .route("/")
 
     .get(getAllCourses)
-    .post(isLoggedIn, authorizedRoles('ADMIN'), upload.single("thumbnail"), createCourse);
+    .post(isLoggedIn, 
+        authorizeRoles('ADMIN'),
+        upload.single("thumbnail"),
+        createCourse)
+    // .delete(isLoggedIn, authorizeRoles('ADMIN'), rem)
 
 router
     .route("/:id")
-    .get(isLoggedIn, authorizedSubscriber, getLecturesBycourseId)
-    .put(isLoggedIn,authorizedRoles('ADMIN') , updateCourse)
-    .delete(isLoggedIn,authorizedRoles('ADMIN') ,removeCourse)
+    .get(isLoggedIn, authorizeSubscribers, getLecturesBycourseId)
     .post(
         isLoggedIn,
-        authorizedRoles('ADMIN'), 
-        upload.single('lecture'), 
+        authorizeRoles('ADMIN'),
+        upload.single('lecture'),
         addLectureToCourseById
-        )
+      )
+    // .put(isLoggedIn, authorizeRoles('ADMIN'), updateCourseById);
 
 
 export default router;
