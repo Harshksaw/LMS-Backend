@@ -30,8 +30,9 @@ try{
         new AppError('Admin cannot purchase a subscription', 400)
     }
     const subscription = await razorpay.subscriptions.create({
-        plan_id: process.env.RAZORPAY_PLAN_ID,
-        customer_notify: 1
+        plan_id: process.env.RAZORPAY_PLAN_ID, //the unique paln Id 
+        customer_notify: 1, //1 means razorpay will hanlde notifiying the uctomer , 0 mean
+        total_count:12, //12 means it will charge very montg for 1 year sub
 
     })
     user.subscription.id = subscription.id;
@@ -96,7 +97,7 @@ export const cancelSubscription = async (req, res, next) => {
     try {
 
         const { id } = req.user
-
+        //Findin the user
         if (!user) {
             return next(
                 new AppError('Unauthorized ,Please Login',)
