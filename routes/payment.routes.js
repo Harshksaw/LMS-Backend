@@ -27,7 +27,8 @@ router
     .route('/subscribe')
     .post(
         isLoggedIn,
-        buySubscription)
+        buySubscription
+        )
 
 router
     .route('/verify')

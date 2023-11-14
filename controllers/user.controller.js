@@ -4,10 +4,9 @@ import fs from 'fs/promises';
 import cloudinary from 'cloudinary';
 
 import asyncHandler from '../middlewares/asyncHandler.middleware.js';
-
+import AppError from '../utils/AppError.js';
 import User from '../models/user.model.js';
 import sendEmail from '../utils/sendEmail.js';
-import AppError from '../utils/appError.js';
 
 const cookieOptions = {
     secure: process.env.NODE_ENV === 'production' ? true : false,
