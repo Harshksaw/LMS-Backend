@@ -1,0 +1,8 @@
+*
+!/
+!*.js
+!*.json
+!*.md
+!*.txt
+!*.env
+/node_modules
