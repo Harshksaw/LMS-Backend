@@ -25,8 +25,8 @@ exports.auth = async (req, res , next) => {
       
 
     } catch (error) {
-        return res.status(500).json({error:"Internal Server Error in AUTH Middleware.Js"});
         console.log(error);
+        return res.status(500).json({error:"Internal Server Error in AUTH Middleware.Js"});
     }
 }; 
 
@@ -36,7 +36,7 @@ exports.isStudent = async (req, res , next) => {
     try {
         const user = await User.findById(req.user._id);
 
-        if(user.accountType !== "Student") return res.status(401).json({error:"Access Denied"});
+        if(user.accountType !== "Student") return res.status(401).json({error:"Access Denied Only for Students"});
         next();
 
       
@@ -71,7 +71,7 @@ exports.isAdmin = async (req, res , next) => {
       
 
     } catch (error) {
-        return res.status(500).json({error:"Internal Server Error in AUTH Admin Middleware.Js"});
         console.log(error);
+        return res.status(500).json({error:"Internal Server Error in AUTH Admin Middleware.Js"});
     }
 }
