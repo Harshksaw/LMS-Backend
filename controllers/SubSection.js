@@ -2,7 +2,7 @@
 
 const Subsection = require('../models/SubSection');
 const Section = require('../models/Section');
-const cloudinary = require('cloudinary').v2;
+const {uploadImageCloudinary} = require('../utils/imageUploader')
 
 exports.createSubSection = async (req, res) => {
 
@@ -19,7 +19,7 @@ exports.createSubSection = async (req, res) => {
         })
         //upload video to cloudinary
 
-        const uploadDetails = await uploadImageToCloudinary(video,  process.env.FOLDER_NAME)
+        const uploadDetails = await uploadImageCloudinary(video,  process.env.FOLDER_NAME)
 
         if(!uploadDetails) return res.status(500).json({msg: "Error uploading video"})
 
