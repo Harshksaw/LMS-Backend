@@ -1,16 +1,18 @@
-const mongoose = require('mongoose');
-
-
-
+const mongoose = require("mongoose");
 require("dotenv").config();
+const DATABASE_URL = process.env.MONGODB_URL || "mongodb://0.0.0.0:27017/Study_notion_db";
+ 
 
-exports.connect = ()=>{
-    mongoose.connect(process.env.MONGODB_URI, {
+
+exports.connect = () => {
+    mongoose.connect( DATABASE_URL , {
         useNewUrlParser: true,
-        useUnifiedTopology: true,
+        useUnifiedTopology:true,
     })
-    .then(()=> console.log("mongodb conntected succesfully"))
-    .catch((error)=>{
-        console.log("error in mongodb connection", error);
-    })
-}
+    .then(() => console.log("DB Connected Successfully"))
+    .catch( (error) => {
+        console.log("DB Connection Failed");
+         console.log(error);
+         process.exit(1);
+    } )
+};     

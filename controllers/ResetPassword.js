@@ -1,7 +1,8 @@
 const User = require("../models/User");
 const OTP = require("../models/OTP");
-const mailSender = require("../utils/mailsender");
+const mailSender = require("../utils/mailSender");
 const bcrypt = require("bcrypt");
+
 exports.resetPassword = async (req, res) => {
     try {
         const email = req.body.email;
@@ -39,7 +40,7 @@ exports.resetPassword = async (req, res) => {
 
 }
 
-exports.resetPasswordForm = async (req, res) => {
+exports.resetPasswordToken = async (req, res) => {
     //data fetch
     //getUser Details
 
