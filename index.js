@@ -15,7 +15,7 @@ const courseRoutes = require("./routes/Course");
 const database = require('./config/database');
 const app = express();
 dotenv.config();
-const PORT = 3000;
+const PORT = 4000;
 
 //database connect
 database.connect();

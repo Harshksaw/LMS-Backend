@@ -94,7 +94,6 @@ exports.createCource = async (req, res) => {
     }
 
 }
-
 //get all COurcese
 
 exports.getAllCourses = async (req, res) => {
