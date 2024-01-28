@@ -1,6 +1,6 @@
 const Profile = require('../models/Profile');
 const User = require('../models/User');
-const courseProgress = require('../models/courseProgress');
+const courseProgress = require('../models/CourseProgress');
 exports.updateProfile = async(req, res)=> {
 
     try {
@@ -43,7 +43,7 @@ exports.updateProfile = async(req, res)=> {
     }
 }
 
-exports.getProfole = async(req, res)=> {
+exports.getProfile = async(req, res)=> {
     try {
         const id = req.user.id;
 
@@ -108,7 +108,7 @@ exports.deleteAccount = async(req, res)=> {
 
 //get all details
 
-exports.getAllDetails = async(req, res)=> {
+exports.getAllUserDetails = async(req, res)=> {
     try {
         
             const id = req.user.id;

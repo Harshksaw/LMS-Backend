@@ -1,4 +1,7 @@
-const ProfileSchema = new Schema({
+const { default: mongoose } = require("mongoose");
+
+
+const ProfileSchema = new mongoose.Schema({
     gender: {
         type: String,
         required: true,

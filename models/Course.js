@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const courceSchema = new Schema({
+const courceSchema = new mongoose.Schema({
     courceName: {
         type: String,
         trim: true,
