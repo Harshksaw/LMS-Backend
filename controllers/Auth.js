@@ -178,49 +178,58 @@ exports.login = async (req, res) => {
 	}
 };
 // Send OTP For Email Verification
-exports.sendotp = async (req, res) => {
+exports.sendotp = async (req, res) =>  {
 	try {
-		const { email } = req.body;
+		const {email} = req.body;
+		console.log("Email:", email);
 
-		// Check if user is already present
-		// Find user with provided email
-		const checkUserPresent = await User.findOne({ email });
-		// to be used in case of signup
+		const checkUserPresent = await User.findOne({email});
+		console.log("User Present:", checkUserPresent);
 
-		// If user found with provided email
-		if (checkUserPresent) {
-			// Return 401 Unauthorized status code with error message
+		if(checkUserPresent) {
+			console.log("User already registered");
 			return res.status(401).json({
-				success: false,
-				message: `User is Already Registered`,
-			});
+				success:false,
+				message:'User already registered',
+			})
 		}
 
 		var otp = otpGenerator.generate(6, {
-			upperCaseAlphabets: false,
-			lowerCaseAlphabets: false,
-			specialChars: false,
+			upperCaseAlphabets:false,
+			lowerCaseAlphabets:false,
+			specialChars:false,
 		});
-		const result = await OTP.findOne({ otp: otp });
-		console.log("Result is Generate OTP Func");
-		console.log("OTP", otp);
-		console.log("Result", result);
-		while (result) {
+		console.log("OTP generated: ", otp );
+
+		let result = await OTP.findOne({otp: otp});
+		while(result){
 			otp = otpGenerator.generate(6, {
 				upperCaseAlphabets: false,
 			});
+			console.log("Regenerating OTP: ", otp);
 		}
-		const otpPayload = { email, otp };
+
+		const otpPayload = {email, otp};
+		console.log("OTP Payload:", otpPayload);
+		console.log("->_._>----------------------->")
+		
 		const otpBody = await OTP.create(otpPayload);
+		
+		console.log("->_._>----------------------->")
 		console.log("OTP Body", otpBody);
+
 		res.status(200).json({
-			success: true,
-			message: `OTP Sent Successfully`,
+			success:true,
+			message:'OTP Sent Successfully',
 			otp,
-		});
-	} catch (error) {
-		console.log(error.message);
-		return res.status(500).json({ success: false, error: error.message });
+		})
+	}
+	catch(error) {
+		console.log(error);
+		return res.status(500).json({
+			success:false,
+			message:error.message,
+		})
 	}
 };
 
