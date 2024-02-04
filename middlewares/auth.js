@@ -1,77 +1,105 @@
-//auth
-
-// /isstudent
-
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("../models/User");
 
-exports.auth = async (req, res , next) => {
-    try {
-        const token =req.cookies.token || req.body.token ||  req.header("Authorisation").replace("Bearer ","");
-        if(!token) return res.status(401).json({error:"No token found"});
+//auth
+exports.auth = async (req, res, next) => {
+    try{
 
+        console.log("BEFORE ToKEN EXTRACTION");
+        //extract token
+        const token = req.cookies.token 
+                        || req.body.token 
+                        || req.header("Authorization").replace("Bearer ", "");
+        console.log("AFTER ToKEN EXTRACTION");
 
+        //if token missing, then return response
+        if(!token) {
+            return res.status(401).json({
+                success:false,
+                message:'TOken is missing',
+            });
+        }
+
+        //verify the token
         try{
-
-            const verified = jwt.verify(token, process.env.SECRET_KEY);
-            console.log(verified);
-            req.user = verified
-        }catch(err){
-            return res.status(401).json({error:"Invalid token"});
+            const decode =  jwt.verify(token, process.env.JWT_SECRET);
+            console.log(decode);
+            req.user = decode;
+        }
+        catch(err) {
+            //verification - issue
+            return res.status(401).json({
+                success:false,
+                message:'token is invalid',
+            });
         }
         next();
-
-      
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({error:"Internal Server Error in AUTH Middleware.Js"});
     }
-}; 
-
-//iStudent
-
-exports.isStudent = async (req, res , next) => {
-    try {
-        const user = await User.findById(req.user._id);
-
-        if(user.accountType !== "Student") return res.status(401).json({error:"Access Denied Only for Students"});
-        next();
-
-      
-
-    } catch (error) {
-        return res.status(500).json({error:"Internal Server Error in AUTH isStudent Middleware.Js"});
-        console.log(error);
-    }
-}
-exports.isInstructor = async (req, res , next) => {
-    try {
-  
-
-        if(req.user.accountType !== "Instructor") return res.status(401).json({error:"Access Denied only for Instructor"});
-        next();
-
-      
-
-    } catch (error) {
-        return res.status(500).json({error:"Internal Server Error in AUTH isINstrucot Middleware.Js"});
-        console.log(error);
+    catch(error) {  
+        return res.status(401).json({
+            success:false,
+            message:'Something went wrong while validating the token',
+        });
     }
 }
 
-exports.isAdmin = async (req, res , next) => {
-    try {
-  
-
-        if(req.user.accountType !== "Admin") return res.status(401).json({error:"Access Denied only for Admin"});
+//isStudent
+exports.isStudent = async (req, res, next) => {
+ try{
+        if(req.user.accountType !== "Student") {
+            return res.status(401).json({
+                success:false,
+                message:'This is a protected route for Students only',
+            });
+        }
         next();
-
-      
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({error:"Internal Server Error in AUTH Admin Middleware.Js"});
-    }
+ }
+ catch(error) {
+    return res.status(500).json({
+        success:false,
+        message:'User role cannot be verified, please try again'
+    })
+ }
 }
+
+
+//isInstructor
+exports.isInstructor = async (req, res, next) => {
+    try{
+           if(req.user.accountType !== "Instructor") {
+               return res.status(401).json({
+                   success:false,
+                   message:'This is a protected route for Instructor only',
+               });
+           }
+           next();
+    }
+    catch(error) {
+       return res.status(500).json({
+           success:false,
+           message:'User role cannot be verified, please try again'
+       })
+    }
+   }
+
+
+//isAdmin
+exports.isAdmin = async (req, res, next) => {
+    try{    
+           console.log("Printing AccountType ", req.user.accountType);
+           if(req.user.accountType !== "Admin") {
+               return res.status(401).json({
+                   success:false,
+                   message:'This is a protected route for Admin only',
+               });
+           }
+           next();
+    }
+    catch(error) {
+       return res.status(500).json({
+           success:false,
+           message:'User role cannot be verified, please try again'
+       })
+    }
+   }
