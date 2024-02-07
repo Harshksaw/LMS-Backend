@@ -132,7 +132,11 @@ const enrolledStudents = async (courses, userId, res) => {
                 message: "Course Not found | enrolledStudents"
             })
         }
-
+            const courseProgress = await CourseProgress.findOne({
+                courseID: courseId,
+                userId: userId,
+                completedVideos: [],
+            });
 
         //find the student and add the courses to enrolled courses
         const enrolledStudents = await User.findByIdAndUpdate(
@@ -140,6 +144,7 @@ const enrolledStudents = async (courses, userId, res) => {
             {
                 $push: {
                     courses: courseId,
+                    courseProgress: courseProgress._id,
                 }
             },
             { new: true }
