@@ -1,0 +1,11 @@
+CLOUD_NAME =dgheyg3iv
+FOLDER_NAME= CLOUDINARY
+JWT_SECRET= xjaiduhedsjaudwu230djweokd
+MAIL_HOST =smtp.gmail.com
+MAIL_PASS =ffoemdiuxrendxvg
+MAIL_USER =indianshahishere@gmail.com
+MONGODB_URL =mongodb+srv://misterharshkumar:lmsbackend@lms-backend.ij2gjag.mongodb.net/?retryWrites=true&w=majority
+
+PORT=4000
+RAZORPAY_KEY=rzp_test_kait7HP5ns9gQU	
+RAZORPAY_SECRET=Ad98XSQvVer2kWruNfOTtYra

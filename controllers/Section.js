@@ -131,3 +131,129 @@ exports.deleteSection = async (req, res) => {
 		});
 	}
 };   
+
+
+
+// const Section = require("../models/Section");
+// const Course = require("../models/Course");
+
+// //createSection => HANDLER FUNCTION
+// exports.createSection = async (req, res) => {
+//     try{
+//         //fetching.. data
+//         const {courseId, sectionName} = req.body;
+
+//         //data validation...
+//         if(!courseId || !sectionName ){
+//             return res.status(400).json({
+//                 success : false,
+//                 message : "all fields are REQUIRED !!",
+//             })
+//         }
+
+//         //creating... section
+//         const newSection = await Section.create({sectionName});
+
+//         //updating.. course with section-object-id
+//         const updatedCourseDetails = await Course.findByIdAndUpdate(
+//                                             courseId, 
+//                                             {
+//                                                 $push:{
+//                                                     courseContent:newSection._id,
+//                                                 }
+//                                             },
+//                                             {
+//                                                 new:true
+//                                             },                                                  
+//             ).populate({
+// 				path: "courseContent",
+// 				populate: {
+// 					path: "subSection",
+// 				},
+// 			})
+// 			.exec();
+//             //NOTE:-- populate section/subsection
+
+//         //sending.. final response
+//         return res.status(200).json({
+//             success : true,
+//             message : "section created SUCCESSFULLY !!",
+//             updatedCourseDetails
+//         })
+
+//     } catch(error){
+//         return res.status(500).json({
+//             success : false,
+//             message : "error ocurred while creating SECTION !!",
+//             erro:error.message,
+//         })
+//     }
+// }
+
+
+// //updateSection => HANDLER FUNCTION
+// exports.updateSection = async (req, res) => {
+//     try{
+//         //fetching.... data
+//         const {sectionId, sectionName} = req.body;
+
+//         //data validation...
+//         if(!sectionId || !sectionName ){
+//             return res.status(400).json({
+//                 success : false,
+//                 message : "all fields are REQUIRED !!",
+//             })
+//         }
+
+//         //updating... data
+//         const section = await Section.findByIdAndUpdate(sectionId, {sectionName}, {new:true});
+
+//         //sending... response
+//         return res.status(200).json({
+//             success : true,
+//             message : section,
+//         })
+
+//     } catch(error) {
+//         return res.status(500).json({
+//             success : false,
+//             message : "error ocurred while updating. SECTION !!",
+//             erro:error.message,
+//         })
+//     }
+// }
+
+// //deleteSection => handler function
+// exports.deleteSection = async (req, res) => {
+//     try{
+//         //HW -> req.params -> test
+
+//         //getting.. ID -: assuming we r sending id in params
+//         const {sectionId, courseId} = req.body;
+
+//         //finding.. id
+//         await Section.findByIdAndDelete(sectionId);
+//         // TODO: DO WE NEED TO DELETE IN COURSE-SCHEMA ALSO  ==== NO
+//         await Course.findByIdAndUpdate(
+//             courseId,
+//             // {
+//             //     courseContent: sectionDetails,
+//             // },
+//             {new : true}
+//             );
+//         //sending... response
+//         return res.status(200).json({
+//             success : true,
+//             message : "section deleted SUCCESSFULLY !!",
+//         })
+
+//     } catch(error) {
+//         return res.status(500).json({
+//             success : false,
+//             message : "error ocurred while deleting.. SECTION !!",
+//             erro:error.message,
+//         })
+//     }
+    
+// }
+

@@ -18,7 +18,7 @@ exports.createCourse = async (req, res) => {
       courseDescription,
       whatYouWillLearn,
       price,
-      tag: _tag,
+      // tag: _tag,
       category,
       status,
       instructions: _instructions,
@@ -27,10 +27,10 @@ exports.createCourse = async (req, res) => {
     const thumbnail = req.files.thumbnailImage
 
     // Convert the tag and instructions from stringified Array to Array
-    const tag = JSON.parse(_tag)
+    // const tag = JSON.parse(_tag)
     const instructions = JSON.parse(_instructions)
 
-    console.log("tag", tag)
+    // console.log("tag", tag)
     console.log("instructions", instructions)
 
     // Check if any of the required fields are missing
@@ -39,7 +39,7 @@ exports.createCourse = async (req, res) => {
       !courseDescription ||
       !whatYouWillLearn ||
       !price ||
-      !tag.length ||
+      // !tag.length ||
       !thumbnail ||
       !category ||
       !instructions.length
@@ -64,7 +64,7 @@ exports.createCourse = async (req, res) => {
       })
     }
 
-    // Check if the tag given is valid
+    // Check if the category given is valid
     const categoryDetails = await Category.findById(category)
     if (!categoryDetails) {
       return res.status(404).json({
@@ -85,7 +85,7 @@ exports.createCourse = async (req, res) => {
       instructor: instructorDetails._id,
       whatYouWillLearn: whatYouWillLearn,
       price,
-      tag,
+      // tag,
       category: categoryDetails._id,
       thumbnail: thumbnailImage.secure_url,
       status: status,
@@ -451,7 +451,7 @@ exports.deleteCourse = async (req, res) => {
     }
 
     // Unenroll students from the course
-    const studentsEnrolled = course.studentsEnroled
+    const studentsEnrolled = course.studentsEnrolled
     for (const studentId of studentsEnrolled) {
       await User.findByIdAndUpdate(studentId, {
         $pull: { courses: courseId },
@@ -486,6 +486,44 @@ exports.deleteCourse = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error",
+      error: error.message,
+    })
+  }
+}
+
+exports.getAllCoursesData = async (req, res) => {
+  try {
+    // const allCourses = await Course.aggregate(
+    //   [
+        
+    //   ]
+    // )
+    const allCourses = await Course.find({})
+    .populate({
+      path: 'instructor',
+      select: 'firstName lastName image email', // Specify fields to populate from the User model
+    })
+    .populate({
+      path: 'courseContent',
+      populate: {
+        path: 'subSection',
+        model: 'SubSection',
+      },
+      model: 'Section',
+    })
+    .populate('studentsEnrolled') // Populate the studentsEnrolled array
+    .populate('category') // Populate the category 
+    .exec()
+
+    return res.status(200).json({
+      success: true,
+      data: allCourses,
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(404).json({
+      success: false,
+      message: `Can't Fetch Course Data`,
       error: error.message,
     })
   }

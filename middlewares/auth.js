@@ -3,17 +3,13 @@ require("dotenv").config();
 const User = require("../models/User");
 
 //auth
-exports.auth = async (req, res, next) => {
+exports.auth = async(req, res, next) => {
     try{
+        //extracting.. 
+        const token = req.cookies.token || req.body.token
+                     || req.header("Authorization").replace("Bearer ", "");
 
-        console.log("BEFORE ToKEN EXTRACTION");
-        //extract token
-        const token = req.cookies.token 
-                        || req.body.token 
-                        || req.header("Authorization").replace("Bearer ", "");
-        console.log("AFTER ToKEN EXTRACTION");
-
-        //if token missing, then return response
+        //if token is  missing...
         if(!token) {
             return res.status(401).json({
                 success:false,
@@ -21,13 +17,13 @@ exports.auth = async (req, res, next) => {
             });
         }
 
-        //verify the token
+        //verifying... the token
         try{
-            const decode =  jwt.verify(token, process.env.JWT_SECRET);
+            const decode = jwt.verify(token, process.env.JWT_SECRET);
             console.log(decode);
             req.user = decode;
-        }
-        catch(err) {
+
+        } catch (error) {
             //verification - issue
             return res.status(401).json({
                 success:false,
@@ -35,8 +31,8 @@ exports.auth = async (req, res, next) => {
             });
         }
         next();
-    }
-    catch(error) {  
+
+    } catch(error) {
         return res.status(401).json({
             success:false,
             message:'Something went wrong while validating the token',
@@ -46,23 +42,22 @@ exports.auth = async (req, res, next) => {
 
 //isStudent
 exports.isStudent = async (req, res, next) => {
- try{
-        if(req.user.accountType !== "Student") {
+    try{
+        if(req.user.accountType !== "Student"){
             return res.status(401).json({
                 success:false,
                 message:'This is a protected route for Students only',
             });
         }
         next();
- }
- catch(error) {
-    return res.status(500).json({
-        success:false,
-        message:'User role cannot be verified, please try again'
-    })
- }
-}
 
+    } catch(error) {
+        return res.status(500).json({
+            success:false,
+            message:'User role cannot be verified, please try again'
+        })
+    }
+}
 
 //isInstructor
 exports.isInstructor = async (req, res, next) => {
@@ -86,8 +81,7 @@ exports.isInstructor = async (req, res, next) => {
 
 //isAdmin
 exports.isAdmin = async (req, res, next) => {
-    try{    
-           console.log("Printing AccountType ", req.user.accountType);
+    try{
            if(req.user.accountType !== "Admin") {
                return res.status(401).json({
                    success:false,
