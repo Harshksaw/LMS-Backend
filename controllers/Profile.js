@@ -206,30 +206,42 @@ exports.getEnrolledCourses = async (req, res) => {
 	}
   }
 
-exports.instructorDashboard = async(req, res) => {
-	try{
-		const courseDetails = await Course.find({instructor:req.user.id});
+exports.instructorDashboard = async (req, res) => {
+    try {
+      const userId = req.user.id
+        const courseDetails = await Course.find({instructor: userId});
 
-		const courseData  = courseDetails.map((course)=> {
-			const totalStudentsEnrolled = course.studentsEnrolled.length
-			const totalAmountGenerated = totalStudentsEnrolled * course.price
+        if (!courseDetails) {
+          return res.status(400).json({
+            success: false,
+            message: `Could not find user with id: ${userId}`,
+          })
+        }
+        const courseData = courseDetails.map((course) => {
+            const totalStudentsEnrolled = course.studentsEnrolled.length;
+            const totalAmountGenerated = totalStudentsEnrolled * course.price;
 
-			//create an new object with the additional fields
-			const courseDataWithStats = {
-				_id: course._id,
-				courseName: course.courseName,
-				courseDescription: course.courseDescription,
-				totalStudentsEnrolled,
-				totalAmountGenerated,
-			}
-			return courseDataWithStats
-		})
+            //create a new ibject with th eadditional fields
 
-		res.status(200).json({courses:courseData});
+            const courseDataWithStats = {
+                _id: course._id,
+                courseName: course.courseName,
+                courseDescription: course.courseDescription,
+                totalStudentsEnrolled,
+                totalAmountGenerated
+            }
+            return courseDataWithStats;
+        })  
+        res.status(200).json({
 
-	}
-	catch(error) {
-		console.error(error);
-		res.status(500).json({message:"Internal Server Error"});
-	}
+            courses: courseData
+            })
+
+
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
+    }
 }
