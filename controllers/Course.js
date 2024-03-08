@@ -1,530 +1,374 @@
-const Course = require("../models/Course")
-const Category = require("../models/Category")
-const Section = require("../models/Section")
-const SubSection = require("../models/SubSection")
-const User = require("../models/User")
-const { uploadImageToCloudinary } = require("../utils/imageUploader")
-const CourseProgress = require("../models/CourseProgress")
-const { convertSecondsToDuration } = require("../utils/secToDuration")
-// Function to create a new course
-exports.createCourse = async (req, res) => {
+// import { setLoading } from "../../slices/profileSlice";
+import { apiConnector } from "../apiconnector"
+import { courseEndpoints } from "../apis"
+import { toast } from "react-hot-toast"
+import { updateCompletedLectures } from "../../slices/viewCourseSlice"
+
+const {
+  COURSE_DETAILS_API,
+  COURSE_CATEGORIES_API,
+  GET_ALL_COURSE_API,
+  CREATE_COURSE_API,
+  EDIT_COURSE_API,
+  CREATE_SECTION_API,
+  CREATE_SUBSECTION_API,
+  UPDATE_SECTION_API,
+  UPDATE_SUBSECTION_API,
+  DELETE_SECTION_API,
+  DELETE_SUBSECTION_API,
+  GET_ALL_INSTRUCTOR_COURSES_API,
+  DELETE_COURSE_API,
+  GET_FULL_COURSE_DETAILS_AUTHENTICATED,
+  CREATE_RATING_API,
+  LECTURE_COMPLETION_API,
+} = courseEndpoints
+
+export const getAllCourses = async () => {
+  const toastId = toast.loading("Loading...")
+  let result = []
   try {
-    // Get user ID from request object
-    const userId = req.user.id
-
-    // Get all required fields from request body
-    let {
-      courseName,
-      courseDescription,
-      whatYouWillLearn,
-      price,
-      // tag: _tag,
-      category,
-      status,
-      instructions: _instructions,
-    } = req.body
-    // Get thumbnail image from request files
-    const thumbnail = req.files.thumbnailImage
-
-    // Convert the tag and instructions from stringified Array to Array
-    // const tag = JSON.parse(_tag)
-    const instructions = JSON.parse(_instructions)
-
-    // console.log("tag", tag)
-    console.log("instructions", instructions)
-
-    // Check if any of the required fields are missing
-    if (
-      !courseName ||
-      !courseDescription ||
-      !whatYouWillLearn ||
-      !price ||
-      // !tag.length ||
-      !thumbnail ||
-      !category ||
-      !instructions.length
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "All Fields are Mandatory",
-      })
+    const response = await apiConnector("GET", GET_ALL_COURSE_API)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Fetch Course Categories")
     }
-    if (!status || status === undefined) {
-      status = "Draft"
-    }
-    // Check if the user is an instructor
-    const instructorDetails = await User.findById(userId, {
-      accountType: "Instructor",
-    })
-
-    if (!instructorDetails) {
-      return res.status(404).json({
-        success: false,
-        message: "Instructor Details Not Found",
-      })
-    }
-
-    // Check if the category given is valid
-    const categoryDetails = await Category.findById(category)
-    if (!categoryDetails) {
-      return res.status(404).json({
-        success: false,
-        message: "Category Details Not Found",
-      })
-    }
-    // Upload the Thumbnail to Cloudinary
-    const thumbnailImage = await uploadImageToCloudinary(
-      thumbnail,
-      process.env.FOLDER_NAME
-    )
-    console.log(thumbnailImage)
-    // Create a new course with the given details
-    const newCourse = await Course.create({
-      courseName,
-      courseDescription,
-      instructor: instructorDetails._id,
-      whatYouWillLearn: whatYouWillLearn,
-      price,
-      // tag,
-      category: categoryDetails._id,
-      thumbnail: thumbnailImage.secure_url,
-      status: status,
-      instructions,
-    })
-
-    // Add the new course to the User Schema of the Instructor
-    await User.findByIdAndUpdate(
-      {
-        _id: instructorDetails._id,
-      },
-      {
-        $push: {
-          courses: newCourse._id,
-        },
-      },
-      { new: true }
-    )
-    // Add the new course to the Categories
-    const categoryDetails2 = await Category.findByIdAndUpdate(
-      { _id: category },
-      {
-        $push: {
-          courses: newCourse._id,
-        },
-      },
-      { new: true }
-    )
-    console.log("HEREEEEEEEE", categoryDetails2)
-    // Return the new course and a success message
-    res.status(200).json({
-      success: true,
-      data: newCourse,
-      message: "Course Created Successfully",
-    })
+    result = response?.data?.data
   } catch (error) {
-    // Handle any errors that occur during the creation of the course
-    console.error(error)
-    res.status(500).json({
-      success: false,
-      message: "Failed to create course",
-      error: error.message,
-    })
+    console.log("GET_ALL_COURSE_API API ERROR............", error)
+    toast.error(error.message)
   }
+  toast.dismiss(toastId)
+  return result
 }
-// Edit Course Details
-exports.editCourse = async (req, res) => {
+
+export const fetchCourseDetails = async (courseId) => {
+  const toastId = toast.loading("Loading...")
+  //   dispatch(setLoading(true));
+  let result = null
   try {
-    const { courseId } = req.body
-    const updates = req.body
-    const course = await Course.findById(courseId)
+    const response = await apiConnector("POST", COURSE_DETAILS_API, {
+      courseId,
+    })
+    console.log("COURSE_DETAILS_API API RESPONSE............", response)
 
-    if (!course) {
-      return res.status(404).json({ error: "Course not found" })
+    if (!response.data.success) {
+      throw new Error(response.data.message)
     }
+    result = response.data
+  } catch (error) {
+    console.log("COURSE_DETAILS_API API ERROR............", error)
+    result = error.response.data
+    // toast.error(error.response.data.message);
+  }
+  toast.dismiss(toastId)
+  //   dispatch(setLoading(false));
+  return result
+}
 
-    // If Thumbnail Image is found, update it
-    if (req.files) {
-      console.log("thumbnail update")
-      const thumbnail = req.files.thumbnailImage
-      const thumbnailImage = await uploadImageToCloudinary(
-        thumbnail,
-        process.env.FOLDER_NAME
-      )
-      course.thumbnail = thumbnailImage.secure_url
+// fetching the available course categories
+export const fetchCourseCategories = async () => {
+}
+
+// add the course details
+export const addCourseDetails = async (data, token) => {
+  let result = null
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", CREATE_COURSE_API, data, {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("CREATE COURSE API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Add Course Details")
     }
+    toast.success("Course Details Added Successfully")
+    result = response?.data?.data
+  } catch (error) {
+    console.log("CREATE COURSE API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+  return result
+}
 
-    // Update only the fields that are present in the request body
-    for (const key in updates) {
-      if (updates.hasOwnProperty(key)) {
-        if (key === "tag" || key === "instructions") {
-          course[key] = JSON.parse(updates[key])
-        } else {
-          course[key] = updates[key]
-        }
+// edit the course details
+export const editCourseDetails = async (data, token) => {
+  let result = null
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", EDIT_COURSE_API, data, {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("EDIT COURSE API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Update Course Details")
+    }
+    toast.success("Course Details Updated Successfully")
+    result = response?.data?.data
+  } catch (error) {
+    console.log("EDIT COURSE API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+  return result
+}
+
+// create a section
+export const createSection = async (data, token) => {
+  let result = null
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", CREATE_SECTION_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("CREATE SECTION API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Create Section")
+    }
+    toast.success("Course Section Created")
+    result = response?.data?.updatedCourse
+  } catch (error) {
+    console.log("CREATE SECTION API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+  return result
+}
+
+// create a subsection
+export const createSubSection = async (data, token) => {
+  let result = null
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", CREATE_SUBSECTION_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("CREATE SUB-SECTION API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Add Lecture")
+    }
+    toast.success("Lecture Added")
+    result = response?.data?.data
+  } catch (error) {
+    console.log("CREATE SUB-SECTION API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+  return result
+}
+
+// update a section
+export const updateSection = async (data, token) => {
+  let result = null
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", UPDATE_SECTION_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("UPDATE SECTION API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Update Section")
+    }
+    toast.success("Course Section Updated")
+    result = response?.data?.data
+  } catch (error) {
+    console.log("UPDATE SECTION API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+  return result
+}
+
+// update a subsection
+export const updateSubSection = async (data, token) => {
+  let result = null
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", UPDATE_SUBSECTION_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("UPDATE SUB-SECTION API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Update Lecture")
+    }
+    toast.success("Lecture Updated")
+    result = response?.data?.data
+  } catch (error) {
+    console.log("UPDATE SUB-SECTION API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+  return result
+}
+
+// delete a section
+export const deleteSection = async (data, token) => {
+  let result = null
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", DELETE_SECTION_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("DELETE SECTION API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Delete Section")
+    }
+    toast.success("Course Section Deleted")
+    result = response?.data?.data
+  } catch (error) {
+    console.log("DELETE SECTION API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+  return result
+}
+// delete a subsection
+export const deleteSubSection = async (data, token) => {
+  let result = null
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector("POST", DELETE_SUBSECTION_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("DELETE SUB-SECTION API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Delete Lecture")
+    }
+    toast.success("Lecture Deleted")
+    result = response?.data?.data
+  } catch (error) {
+    console.log("DELETE SUB-SECTION API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+  return result
+}
+
+// fetching all courses under a specific instructor
+export const fetchInstructorCourses = async (token) => {
+  let result = []
+  const toastId = toast.loading("Loading...")
+  try {
+    const response = await apiConnector(
+      "GET",
+      GET_ALL_INSTRUCTOR_COURSES_API,
+      null,
+      {
+        Authorization: `Bearer ${token}`,
       }
+    )
+    console.log("INSTRUCTOR COURSES API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Fetch Instructor Courses")
     }
-
-    await course.save()
-
-    const updatedCourse = await Course.findOne({
-      _id: courseId,
-    })
-      .populate({
-        path: "instructor",
-        populate: {
-          path: "additionalDetails",
-        },
-      })
-      .populate("category")
-      .populate("ratingAndReviews")
-      .populate({
-        path: "courseContent",
-        populate: {
-          path: "subSection",
-        },
-      })
-      .exec()
-
-    res.json({
-      success: true,
-      message: "Course updated successfully",
-      data: updatedCourse,
-    })
+    result = response?.data?.data
   } catch (error) {
-    console.error(error)
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    })
+    console.log("INSTRUCTOR COURSES API ERROR............", error)
+    toast.error(error.message)
   }
+  toast.dismiss(toastId)
+  return result
 }
-// Get Course List
-exports.getAllCourses = async (req, res) => {
+
+// delete a course
+export const deleteCourse = async (data, token) => {
+  const toastId = toast.loading("Loading...")
   try {
-    const allCourses = await Course.find(
-      { status: "Published" },
+    const response = await apiConnector("DELETE", DELETE_COURSE_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    console.log("DELETE COURSE API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Delete Course")
+    }
+    toast.success("Course Deleted")
+  } catch (error) {
+    console.log("DELETE COURSE API ERROR............", error)
+    toast.error(error.message)
+  }
+  toast.dismiss(toastId)
+}
+
+// get full details of a course
+export const getFullDetailsOfCourse = async (courseId, token) => {
+  const toastId = toast.loading("Loading...")
+  //   dispatch(setLoading(true));
+  let result = null
+  try {
+    const response = await apiConnector(
+      "POST",
+      GET_FULL_COURSE_DETAILS_AUTHENTICATED,
       {
-        courseName: true,
-        price: true,
-        thumbnail: true,
-        instructor: true,
-        ratingAndReviews: true,
-        studentsEnrolled: true,
+        courseId,
+      },
+      {
+        Authorization: `Bearer ${token}`,
       }
     )
-      .populate("instructor")
-      .exec()
+    console.log("COURSE_FULL_DETAILS_API API RESPONSE............", response)
 
-    return res.status(200).json({
-      success: true,
-      data: allCourses,
-    })
-  } catch (error) {
-    console.log(error)
-    return res.status(404).json({
-      success: false,
-      message: `Can't Fetch Course Data`,
-      error: error.message,
-    })
-  }
-}
-// Get One Single Course Details
-// exports.getCourseDetails = async (req, res) => {
-//   try {
-//     const { courseId } = req.body
-//     const courseDetails = await Course.findOne({
-//       _id: courseId,
-//     })
-//       .populate({
-//         path: "instructor",
-//         populate: {
-//           path: "additionalDetails",
-//         },
-//       })
-//       .populate("category")
-//       .populate("ratingAndReviews")
-//       .populate({
-//         path: "courseContent",
-//         populate: {
-//           path: "subSection",
-//         },
-//       })
-//       .exec()
-//     // console.log(
-//     //   "###################################### course details : ",
-//     //   courseDetails,
-//     //   courseId
-//     // );
-//     if (!courseDetails || !courseDetails.length) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `Could not find course with id: ${courseId}`,
-//       })
-//     }
-
-//     if (courseDetails.status === "Draft") {
-//       return res.status(403).json({
-//         success: false,
-//         message: `Accessing a draft course is forbidden`,
-//       })
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       data: courseDetails,
-//     })
-//   } catch (error) {
-//     return res.status(500).json({
-//       success: false,
-//       message: error.message,
-//     })
-//   }
-// }
-exports.getCourseDetails = async (req, res) => {
-  try {
-    const { courseId } = req.body
-    const courseDetails = await Course.findOne({
-      _id: courseId,
-    })
-      .populate({
-        path: "instructor",
-        populate: {
-          path: "additionalDetails",
-        },
-      })
-      .populate("category")
-      .populate("ratingAndReviews")
-      .populate({
-        path: "courseContent",
-        populate: {
-          path: "subSection",
-          select: "-videoUrl",
-        },
-      })
-      .exec()
-
-    if (!courseDetails) {
-      return res.status(400).json({
-        success: false,
-        message: `Could not find course with id: ${courseId}`,
-      })
+    if (!response.data.success) {
+      throw new Error(response.data.message)
     }
-
-    // if (courseDetails.status === "Draft") {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: `Accessing a draft course is forbidden`,
-    //   });
-    // }
-
-    let totalDurationInSeconds = 0
-    courseDetails.courseContent.forEach((content) => {
-      content.subSection.forEach((subSection) => {
-        const timeDurationInSeconds = parseInt(subSection.timeDuration)
-        totalDurationInSeconds += timeDurationInSeconds
-      })
-    })
-
-    const totalDuration = convertSecondsToDuration(totalDurationInSeconds)
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        courseDetails,
-        totalDuration,
-      },
-    })
+    result = response?.data?.data
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    })
+    console.log("COURSE_FULL_DETAILS_API API ERROR............", error)
+    result = error.response.data
+    // toast.error(error.response.data.message);
   }
-}
-exports.getFullCourseDetails = async (req, res) => {
-  try {
-    const { courseId } = req.body
-    const userId = req.user.id
-    const courseDetails = await Course.findOne({
-      _id: courseId,
-    })
-      .populate({
-        path: "instructor",
-        populate: {
-          path: "additionalDetails",
-        },
-      })
-      .populate("category")
-      .populate("ratingAndReviews")
-      .populate({
-        path: "courseContent",
-        populate: {
-          path: "subSection",
-        },
-      })
-      .exec()
-
-    let courseProgressCount = await CourseProgress.findOne({
-      courseID: courseId,
-      userId: userId,
-    })
-
-    console.log("courseProgressCount : ", courseProgressCount)
-
-    if (!courseDetails) {
-      return res.status(400).json({
-        success: false,
-        message: `Could not find course with id: ${courseId}`,
-      })
-    }
-
-    // if (courseDetails.status === "Draft") {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: `Accessing a draft course is forbidden`,
-    //   });
-    // }
-
-    let totalDurationInSeconds = 0
-    courseDetails.courseContent.forEach((content) => {
-      content.subSection.forEach((subSection) => {
-        const timeDurationInSeconds = parseInt(subSection.timeDuration)
-        totalDurationInSeconds += timeDurationInSeconds
-      })
-    })
-
-    const totalDuration = convertSecondsToDuration(totalDurationInSeconds)
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        courseDetails,
-        totalDuration,
-        completedVideos: courseProgressCount?.completedVideos
-          ? courseProgressCount?.completedVideos
-          : [],
-      },
-    })
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    })
-  }
+  toast.dismiss(toastId)
+  //   dispatch(setLoading(false));
+  return result
 }
 
-// Get a list of Course for a given Instructor
-exports.getInstructorCourses = async (req, res) => {
+// mark a lecture as complete
+export const markLectureAsComplete = async (data, token) => {
+  let result = null
+  console.log("mark complete data", data)
+  const toastId = toast.loading("Loading...")
   try {
-    // Get the instructor ID from the authenticated user or request body
-    const instructorId = req.user.id
-
-    // Find all courses belonging to the instructor
-    const instructorCourses = await Course.find({
-      instructor: instructorId,
-    }).sort({ createdAt: -1 })
-
-    // Return the instructor's courses
-    res.status(200).json({
-      success: true,
-      data: instructorCourses,
+    const response = await apiConnector("POST", LECTURE_COMPLETION_API, data, {
+      Authorization: `Bearer ${token}`,
     })
+    console.log(
+      "MARK_LECTURE_AS_COMPLETE_API API RESPONSE............",
+      response
+    )
+
+    if (!response.data.message) {
+      throw new Error(response.data.error)
+    }
+    toast.success("Lecture Completed")
+    result = true
   } catch (error) {
-    console.error(error)
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve instructor courses",
-      error: error.message,
-    })
+    console.log("MARK_LECTURE_AS_COMPLETE_API API ERROR............", error)
+    toast.error(error.message)
+    result = false
   }
-}
-// Delete the Course
-exports.deleteCourse = async (req, res) => {
-  try {
-    const { courseId } = req.body
-
-    // Find the course
-    const course = await Course.findById(courseId)
-    if (!course) {
-      return res.status(404).json({ message: "Course not found" })
-    }
-
-    // Unenroll students from the course
-    const studentsEnrolled = course.studentsEnrolled
-    for (const studentId of studentsEnrolled) {
-      await User.findByIdAndUpdate(studentId, {
-        $pull: { courses: courseId },
-      })
-    }
-
-    // Delete sections and sub-sections
-    const courseSections = course.courseContent
-    for (const sectionId of courseSections) {
-      // Delete sub-sections of the section
-      const section = await Section.findById(sectionId)
-      if (section) {
-        const subSections = section.subSection
-        for (const subSectionId of subSections) {
-          await SubSection.findByIdAndDelete(subSectionId)
-        }
-      }
-
-      // Delete the section
-      await Section.findByIdAndDelete(sectionId)
-    }
-
-    // Delete the course
-    await Course.findByIdAndDelete(courseId)
-
-    return res.status(200).json({
-      success: true,
-      message: "Course deleted successfully",
-    })
-  } catch (error) {
-    console.error(error)
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    })
-  }
+  toast.dismiss(toastId)
+  return result
 }
 
-exports.getAllCoursesData = async (req, res) => {
+// create a rating for course
+export const createRating = async (data, token) => {
+  const toastId = toast.loading("Loading...")
+  let success = false
   try {
-    // const allCourses = await Course.aggregate(
-    //   [
-        
-    //   ]
-    // )
-    const allCourses = await Course.find({})
-    .populate({
-      path: 'instructor',
-      select: 'firstName lastName image email', // Specify fields to populate from the User model
+    const response = await apiConnector("POST", CREATE_RATING_API, data, {
+      Authorization: `Bearer ${token}`,
     })
-    .populate({
-      path: 'courseContent',
-      populate: {
-        path: 'subSection',
-        model: 'SubSection',
-      },
-      model: 'Section',
-    })
-    .populate('studentsEnrolled') // Populate the studentsEnrolled array
-    .populate('category') // Populate the category 
-    .exec()
-
-    return res.status(200).json({
-      success: true,
-      data: allCourses,
-    })
+    console.log("CREATE RATING API RESPONSE............", response)
+    if (!response?.data?.success) {
+      throw new Error("Could Not Create Rating")
+    }
+    toast.success("Rating Created")
+    success = true
   } catch (error) {
-    console.log(error)
-    return res.status(404).json({
-      success: false,
-      message: `Can't Fetch Course Data`,
-      error: error.message,
-    })
+    success = false
+    console.log("CREATE RATING API ERROR............", error)
+    toast.error(error.message)
   }
+  toast.dismiss(toastId)
+  return success
 }

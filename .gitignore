@@ -1,0 +1,23 @@
+// FILEPATH: /workspaces/LMS-Backend/.gitignore
+# Dependency directories
+/node_modules
+
+# Build files
+/build
+/dist
+
+# Environment variables
+.env
+
+# IDE files
+/.vscode
+/.idea
+
+# Logs
+/logs
+
+# Testing files
+/coverage
+
+# Miscellaneous
+.DS_Store
